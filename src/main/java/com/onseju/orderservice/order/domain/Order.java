@@ -115,11 +115,6 @@ public class Order extends BaseEntity {
 		this.updateStatusBasedOnQuantity();
 	}
 
-	// 체결 완료 여부 확인
-	public boolean isCompletelyFilled() {
-		return this.remainingQuantity.compareTo(BigDecimal.ZERO) == 0;
-	}
-
 	public BigDecimal getRemainingQuantity() {
 		// AtomicReference가 초기화되지 않았으면 일반 필드 반환
 		if (atomicRemainingQuantity == null) {
