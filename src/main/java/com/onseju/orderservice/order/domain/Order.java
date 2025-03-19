@@ -41,17 +41,17 @@ public class Order extends BaseEntity {
 	@Column(nullable = false)
 	private Type type;
 
-	@Column(nullable = false, precision = 10, scale = 0)
+	@Column(nullable = false, precision = 10)
 	private BigDecimal totalQuantity;
 
-	@Column(nullable = false, precision = 10, scale = 0)
+	@Column(nullable = false, precision = 10)
 	private BigDecimal remainingQuantity;
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
 	private OrderStatus status;
 
-	@Column(nullable = false, precision = 10, scale = 0)
+	@Column(nullable = false, precision = 10)
 	private BigDecimal price;
 
 	@JoinColumn(nullable = false)
@@ -93,10 +93,6 @@ public class Order extends BaseEntity {
 		}
 	}
 
-	public boolean isSellType() {
-		return type == Type.SELL;
-	}
-
 	// 주문 완료 처리
 	public void complete() {
 		this.status = OrderStatus.COMPLETE;
@@ -114,13 +110,4 @@ public class Order extends BaseEntity {
 		this.decreaseRemainingQuantity(matchedQuantity);
 		this.updateStatusBasedOnQuantity();
 	}
-
-	public BigDecimal getRemainingQuantity() {
-		// AtomicReference가 초기화되지 않았으면 일반 필드 반환
-		if (atomicRemainingQuantity == null) {
-			return remainingQuantity;
-		}
-		return atomicRemainingQuantity.get();
-	}
-
 }

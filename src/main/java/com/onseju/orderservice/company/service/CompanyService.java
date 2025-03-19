@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +23,9 @@ public class CompanyService {
 	public List<CompanySearchResponseDto> searchCompanies(final String query) {
 		return companyRepository.findByIsuNmContainingOrIsuAbbrvContainingOrIsuEngNmContainingOrIsuSrtCdContaining(
 				query)
-			.stream()
-			.map(CompanySearchResponseDto::fromEntity)
-			.collect(Collectors.toList());
+				.stream()
+				.map(CompanySearchResponseDto::fromEntity)
+				.toList();
 	}
 
 }

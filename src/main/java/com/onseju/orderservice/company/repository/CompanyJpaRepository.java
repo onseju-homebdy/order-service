@@ -8,9 +8,12 @@ import java.util.Optional;
 
 public interface CompanyJpaRepository extends JpaRepository<Company, Long> {
 
-	List<Company> findByIsuNmContainingOrIsuAbbrvContainingOrIsuEngNmContainingOrIsuSrtCdContaining(String isuNm,
-		String isuAbbrv,
-		String isuEngNm, String isuSrtCd);
+	List<Company> findByIsuNmContainingOrIsuAbbrvContainingOrIsuEngNmContainingOrIsuSrtCdContaining(
+			String isuNm,
+			String isuAbbrv,
+			String isuEngNm,
+			String isuSrtCd
+	);
 
 	Optional<Company> findByIsuSrtCd(String isuSrtCd);
 

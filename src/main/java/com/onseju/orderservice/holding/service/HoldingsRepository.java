@@ -6,7 +6,9 @@ import java.util.Optional;
 
 public interface HoldingsRepository {
 
-	Optional<Holdings> findByAccountIdAndCompanyCode(final Long accountId, final String companyCode);
+	Holdings getByAccountIdAndCompanyCode(final Long accountId, final String companyCode);
 
 	Holdings save(final Holdings holdings);
+
+	Optional<Holdings> findByAccountIdAndCompanyCode(final Long accountId, final String companyCode);
 }

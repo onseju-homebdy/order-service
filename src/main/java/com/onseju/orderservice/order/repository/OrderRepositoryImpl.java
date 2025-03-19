@@ -4,12 +4,12 @@ package com.onseju.orderservice.order.repository;
 import com.onseju.orderservice.order.domain.Order;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+@Component
 @RequiredArgsConstructor
 public class OrderRepositoryImpl implements OrderRepository {
 

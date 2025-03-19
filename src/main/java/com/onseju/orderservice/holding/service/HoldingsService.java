@@ -18,22 +18,20 @@ public class HoldingsService {
 										 final BigDecimal price, final BigDecimal quantity) {
 		final Holdings holdings = getOrCreateHoldings(accountId, companyCode);
 		holdings.updateHoldings(type, price, quantity);
-		saveHoldings(holdings);
-	}
-
-	public void saveHoldings(final Holdings holdings) {
 		holdingsRepository.save(holdings);
 	}
 
 	public Holdings getOrCreateHoldings(final Long accountId, final String companyCode) {
 		return holdingsRepository.findByAccountIdAndCompanyCode(accountId, companyCode)
-				.orElseGet(() -> Holdings.builder()
+				.orElse(
+						Holdings.builder()
 						.accountId(accountId)
 						.companyCode(companyCode)
 						.quantity(BigDecimal.ZERO)
 						.reservedQuantity(BigDecimal.ZERO)
 						.averagePrice(BigDecimal.ZERO)
 						.totalPurchasePrice(BigDecimal.ZERO)
-						.build());
+						.build()
+				);
 	}
 }

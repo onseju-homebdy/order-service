@@ -2,18 +2,19 @@ package com.onseju.orderservice.order.service;
 
 import com.onseju.orderservice.company.domain.Company;
 import com.onseju.orderservice.company.service.CompanyRepository;
-import com.onseju.orderservice.order.controller.request.OrderRequest;
 import com.onseju.orderservice.holding.domain.Holdings;
-import com.onseju.orderservice.order.domain.Order;
-import com.onseju.orderservice.order.domain.Type;
-import com.onseju.orderservice.holding.exception.HoldingsNotFoundException;
-import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
 import com.onseju.orderservice.holding.service.HoldingsRepository;
+import com.onseju.orderservice.order.controller.request.OrderRequest;
+import com.onseju.orderservice.order.domain.Account;
+import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
+import com.onseju.orderservice.order.mapper.OrderMapper;
+import com.onseju.orderservice.order.service.repository.AccountRepository;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
 import com.onseju.orderservice.order.service.validator.OrderValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
@@ -25,8 +26,11 @@ public class OrderService {
 	private final OrderRepository orderRepository;
 	private final CompanyRepository companyRepository;
 	private final HoldingsRepository holdingsRepository;
+	private final AccountRepository accountRepository;
+	private final OrderMapper orderMapper;
 
-	public void placeOrder(final OrderRequest request) {
+	@Transactional
+	public void placeOrder(final OrderRequest request, Long memberId) {
 		// 지정가 주문 가격 견적 유효성 검증
 		final BigDecimal price = request.price();
 		final OrderValidator validator = OrderValidator.getUnitByPrice(price);
@@ -35,8 +39,10 @@ public class OrderService {
 		// 종가 기준 검증
 		validateClosingPrice(price, request.companyCode());
 
-		final Order order = createOrder(request);
-		orderRepository.save(order);
+		// TODO: accountId 값 변경 필요
+		Account account = accountRepository.getByMemberId(memberId);
+		reserveForSellOrder(request);
+		orderRepository.save(orderMapper.toEntity(request, account.getId()));
 	}
 
 	// 종가 기준 가격 검증
@@ -48,16 +54,16 @@ public class OrderService {
 		}
 	}
 
-	private Order createOrder(final OrderRequest request) {
-		// 매도 시 보유 주식 확인 및 보유 주식 수량 검증 후 예약 매도 수량 설정
-		if (request.type() == Type.SELL) {
-			final Holdings holdings = holdingsRepository.findByAccountIdAndCompanyCode(1L, request.companyCode())
-					.orElseThrow(HoldingsNotFoundException::new);
-			holdings.validateExistHoldings();
-			holdings.validateEnoughHoldings(request.totalQuantity());
+	private void reserveForSellOrder(final OrderRequest request) {
+		if (request.type().isSell()) {
+			final Holdings holdings = holdingsRepository.getByAccountIdAndCompanyCode(1L, request.companyCode());
+			validateHoldings(holdings, request.totalQuantity());
 			holdings.processReservedOrder(request.totalQuantity());
-			holdingsRepository.save(holdings);
 		}
-		return Order.builder().build();
+	}
+
+	private void validateHoldings(final Holdings holdings, final BigDecimal totalQuantity) {
+		holdings.validateExistHoldings();
+		holdings.validateEnoughHoldings(totalQuantity);
 	}
 }
