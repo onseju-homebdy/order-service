@@ -1,8 +1,7 @@
 package com.onseju.orderservice.company.controller;
 
-import com.onseju.orderservice.company.controller.response.CompanySearchResponseDto;
+import com.onseju.orderservice.company.controller.response.CompanySearchResponse;
 import com.onseju.orderservice.company.service.CompanyService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/companies")
-@Slf4j
 public class CompanyController {
 
 	private final CompanyService companyService;
@@ -30,13 +28,11 @@ public class CompanyController {
 	 */
 
 	@GetMapping("/search")
-	public List<CompanySearchResponseDto> searchCompanies(@RequestParam(name = "query") final String query) {
+	public List<CompanySearchResponse> searchCompanies(@RequestParam(name = "query") final String query) {
 		if (query == null || query.trim().isEmpty()) {
-			log.info("빈 검색어가 입력되었습니다.");
 			return Collections.emptyList();
 		}
 		return companyService.searchCompanies(query);
 	}
-
 }
 
