@@ -75,7 +75,7 @@ class HoldingsTest {
         BigDecimal reservedQuantity = BigDecimal.valueOf(10);
 
         // When
-        holdings.processReservedOrder(reservedQuantity);
+        holdings.reserveOrder(reservedQuantity);
 
         // Then
         assertThat(holdings.getReservedQuantity()).isEqualTo(BigDecimal.valueOf(30));

@@ -66,16 +66,13 @@ public class Holdings extends BaseEntity {
 	}
 
 	public void validateExistHoldings() {
-		if (this.isDeleted()) {
-			throw new HoldingsNotFoundException();
-		}
-		if (this.quantity.compareTo(BigDecimal.ZERO) == 0) {
+		if (this.isDeleted() || this.quantity.equals(BigDecimal.ZERO)) {
 			throw new HoldingsNotFoundException();
 		}
 	}
 
 	// 예약 주문 처리
-	public void processReservedOrder(final BigDecimal reservedQuantity) {
+	public void reserveOrder(final BigDecimal reservedQuantity) {
 		this.reservedQuantity = this.reservedQuantity.add(reservedQuantity);
 	}
 

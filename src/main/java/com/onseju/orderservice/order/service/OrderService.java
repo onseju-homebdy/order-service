@@ -57,7 +57,7 @@ public class OrderService {
 		if (request.type().isSell()) {
 			final Holdings holdings = holdingsRepository.getByAccountIdAndCompanyCode(1L, request.companyCode());
 			validateHoldings(holdings, request.totalQuantity());
-			holdings.processReservedOrder(request.totalQuantity());
+			holdings.reserveOrder(request.totalQuantity());
 		}
 	}
 

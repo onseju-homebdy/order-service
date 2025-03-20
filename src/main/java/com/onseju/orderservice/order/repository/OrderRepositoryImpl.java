@@ -6,7 +6,6 @@ import com.onseju.orderservice.order.service.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -23,15 +22,5 @@ public class OrderRepositoryImpl implements OrderRepository {
 	@Override
 	public Optional<Order> findById(final Long id) {
 		return orderJpaRepository.findById(id);
-	}
-
-	@Override
-	public List<Order> findByCompanyCode(final String number) {
-		return null;
-	}
-
-	@Override
-	public List<Order> findAll() {
-		return orderJpaRepository.findAll();
 	}
 }

@@ -32,7 +32,7 @@ class OrderControllerTest {
 	private ObjectMapper objectMapper;
 
 	@Test
-	@DisplayName("TC20.3.1 주문 생성 테스트")
+	@DisplayName("주문 생성 테스트")
 	void testReceived() throws Exception {
 		OrderRequest request = OrderRequest.builder()
 				.companyCode("AAPL")

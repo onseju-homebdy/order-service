@@ -2,12 +2,17 @@ package com.onseju.orderservice.order.service;
 
 import com.onseju.orderservice.company.domain.Company;
 import com.onseju.orderservice.company.service.CompanyRepository;
-import com.onseju.orderservice.holding.repository.HoldingsRepositoryImpl;
+import com.onseju.orderservice.holding.domain.Holdings;
+import com.onseju.orderservice.holding.exception.HoldingsNotFoundException;
+import com.onseju.orderservice.holding.exception.InsufficientHoldingsException;
+import com.onseju.orderservice.holding.service.HoldingsRepository;
 import com.onseju.orderservice.order.controller.request.OrderRequest;
 import com.onseju.orderservice.order.domain.Account;
 import com.onseju.orderservice.order.domain.Type;
 import com.onseju.orderservice.order.exception.OrderPriceQuotationException;
 import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
+import com.onseju.orderservice.order.fake.FakeHoldingsRepository;
+import com.onseju.orderservice.order.fake.FakeOrderRepository;
 import com.onseju.orderservice.order.mapper.OrderMapper;
 import com.onseju.orderservice.order.service.repository.AccountRepository;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
@@ -23,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,11 +46,9 @@ class OrderServiceTest {
 	@Mock
 	CompanyRepository companyRepository;
 
-	@Mock
-	HoldingsRepositoryImpl holdingsRepository;
+	HoldingsRepository holdingsRepository = new FakeHoldingsRepository();
 
-	@Mock
-	OrderRepository orderRepository;
+	OrderRepository orderRepository = new FakeOrderRepository();
 
 	OrderMapper orderMapper = new OrderMapper();
 
@@ -67,11 +71,12 @@ class OrderServiceTest {
 			when(companyRepository.findByIsuSrtCd(any())).thenReturn(company);
 			when(accountRepository.getByMemberId(any())).thenReturn(account);
 
-			orderService.placeOrder(request, 1L);
+			assertThatNoException().isThrownBy(() -> orderService.placeOrder(request, 1L));
 		}
 	}
 
 	@Nested
+	@DisplayName("입력된 가격에 대한 검증을 진행한다.")
 	class BoundaryTests {
 		@Test
 		@DisplayName("입력된 가격이 종가 기준 상향 30% 이상일 경우 정상적으로 처리한다.")
@@ -147,6 +152,57 @@ class OrderServiceTest {
 		}
 	}
 
+	@Nested
+	@DisplayName("매도 주문일 경우 보유 주식 개수를 확인하고, 예약 주문 개수를 저장한다.")
+	class SellOrderReservation {
+
+		@Test
+		@DisplayName("매도 주문일 경우, 예약 주문 개수를 저장한다.")
+		void reserveForSellType() {
+		    // given
+			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000));
+			Holdings holdings = createHoldings(new BigDecimal(10));
+			holdingsRepository.save(holdings);
+			when(companyRepository.findByIsuSrtCd(any())).thenReturn(company);
+			when(accountRepository.getByMemberId(any())).thenReturn(account);
+
+			// when
+			orderService.placeOrder(request, 1L);
+
+		    // then
+			Holdings updatedHoldings = holdingsRepository.getByAccountIdAndCompanyCode(holdings.getAccountId(), holdings.getCompanyCode());
+			assertThat(updatedHoldings.getReservedQuantity()).isEqualTo(new BigDecimal(1));
+		}
+
+		@Test
+		@DisplayName("매도 주문일 경우, 입력한 종목에 대한 보유 주식이 없을 경우 예외가 발생한다.")
+		void throwExceptionWhenSellingStockWithoutHoldingAny() {
+			// given
+			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000));
+			when(companyRepository.findByIsuSrtCd(any())).thenReturn(company);
+			when(accountRepository.getByMemberId(any())).thenReturn(account);
+
+			// when, then
+			assertThatThrownBy(() -> orderService.placeOrder(request, 1L))
+					.isInstanceOf(HoldingsNotFoundException.class);
+		}
+
+		@Test
+		@DisplayName("매도 주문일 경우, 입력한 종목에 대한 보유 주식의 개수가 부족할 경우 예외가 발생한다.")
+		void throwExceptionWhenSellingExceedingOwnedQuantity() {
+			// given
+			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(100), new BigDecimal(1000));
+			Holdings holdings = createHoldings(new BigDecimal(10));
+			holdingsRepository.save(holdings);
+			when(companyRepository.findByIsuSrtCd(any())).thenReturn(company);
+			when(accountRepository.getByMemberId(any())).thenReturn(account);
+
+			// when, then
+			assertThatThrownBy(() -> orderService.placeOrder(request, 1L))
+					.isInstanceOf(InsufficientHoldingsException.class);
+		}
+	}
+
 	private OrderRequest createOrderRequest(
 		Type type,
 		BigDecimal totalQuantity,
@@ -159,5 +215,16 @@ class OrderServiceTest {
 			price,
 			LocalDateTime.of(2025, 1, 1, 1, 1)
 		);
+	}
+
+	private Holdings createHoldings(BigDecimal quantity) {
+		return Holdings.builder()
+				.companyCode("005930")
+				.quantity(quantity)
+				.reservedQuantity(new BigDecimal(0))
+				.averagePrice(new BigDecimal(1000))
+				.totalPurchasePrice(new BigDecimal(10000))
+				.accountId(account.getId())
+				.build();
 	}
 }
