@@ -39,7 +39,6 @@ public class OrderService {
 		// 종가 기준 검증
 		validateClosingPrice(price, request.companyCode());
 
-		// TODO: accountId 값 변경 필요
 		Account account = accountRepository.getByMemberId(memberId);
 		reserveForSellOrder(request);
 		orderRepository.save(orderMapper.toEntity(request, account.getId()));
