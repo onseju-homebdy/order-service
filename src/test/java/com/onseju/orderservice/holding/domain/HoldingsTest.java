@@ -1,6 +1,5 @@
-package com.onseju.orderservice.holdings.domain;
+package com.onseju.orderservice.holding.domain;
 
-import com.onseju.orderservice.holding.domain.Holdings;
 import com.onseju.orderservice.holding.exception.HoldingsNotFoundException;
 import com.onseju.orderservice.holding.exception.InsufficientHoldingsException;
 import com.onseju.orderservice.order.domain.Type;
@@ -12,6 +11,7 @@ import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HoldingsTest {
@@ -22,14 +22,22 @@ class HoldingsTest {
     void setUp() {
         holdings = Holdings.builder()
                 .quantity(BigDecimal.valueOf(100))
-                .reservedQuantity(BigDecimal.valueOf(20))
-                .averagePrice(BigDecimal.valueOf(100))
-                .totalPurchasePrice(BigDecimal.valueOf(2000))
+                .reservedQuantity(BigDecimal.valueOf(0))
+                .averagePrice(BigDecimal.valueOf(1000))
+                .totalPurchasePrice(BigDecimal.valueOf(100000))
                 .build();
     }
 
     @Test
-    @DisplayName("보유 주식 수량이 충분할 경우 예외가 발생하지 않아야 한다")
+    @DisplayName("보유 주식 내역이 존재하는지 검증한다.")
+    void validateExistHoldings() {
+        // When & Then
+        assertThatNoException()
+                .isThrownBy(() -> holdings.validateExistHoldings());
+    }
+
+    @Test
+    @DisplayName("보유 주식 수량이 충분한지 검증한다.")
     void validateEnoughHoldings_whenEnoughQuantity_shouldNotThrowException() {
         // Given
         BigDecimal checkQuantity = BigDecimal.valueOf(50);
@@ -43,7 +51,7 @@ class HoldingsTest {
     @DisplayName("보유 주식 수량이 부족할 경우 InsufficientHoldingsException이 발생해야 한다")
     void validateEnoughHoldings_whenNotEnoughQuantity_shouldThrowInsufficientHoldingsException() {
         // Given
-        BigDecimal checkQuantity = BigDecimal.valueOf(90);
+        BigDecimal checkQuantity = BigDecimal.valueOf(110);
 
         // When & Then
         assertThatThrownBy(() -> holdings.validateEnoughHoldings(checkQuantity))
@@ -78,14 +86,14 @@ class HoldingsTest {
         holdings.reserveOrder(reservedQuantity);
 
         // Then
-        assertThat(holdings.getReservedQuantity()).isEqualTo(BigDecimal.valueOf(30));
+        assertThat(holdings.getReservedQuantity()).isEqualTo(BigDecimal.valueOf(10));
     }
 
     @Test
     @DisplayName("매수 시 보유 주식 수량과 총 매수 금액이 업데이트 되어야 한다")
     void updateHoldings_whenBuy_shouldUpdateQuantityAndTotalPurchasePrice() {
         // Given
-        BigDecimal updatePrice = BigDecimal.valueOf(2000);
+        BigDecimal updatePrice = BigDecimal.valueOf(100);
         BigDecimal updateQuantity = BigDecimal.valueOf(10);
 
         // When
@@ -93,8 +101,8 @@ class HoldingsTest {
 
         // Then
         assertThat(holdings.getQuantity()).isEqualTo(BigDecimal.valueOf(110));
-        assertThat(holdings.getTotalPurchasePrice()).isEqualTo(BigDecimal.valueOf(22000));
-        assertThat(holdings.getAveragePrice()).isEqualTo(BigDecimal.valueOf(2000000, 4));
+        assertThat(holdings.getTotalPurchasePrice()).isEqualTo(BigDecimal.valueOf(101_000));
+        assertThat(holdings.getAveragePrice()).isEqualTo(new BigDecimal("918.1818"));
     }
 
     @Test
@@ -109,7 +117,7 @@ class HoldingsTest {
 
         // Then
         assertThat(holdings.getQuantity()).isEqualTo(BigDecimal.valueOf(99));
-        assertThat(holdings.getTotalPurchasePrice()).isEqualTo(originalTotalQuantity.subtract(updateQuantity.multiply(holdings.getAveragePrice())));
+        assertThat(holdings.getTotalPurchasePrice().intValueExact()).isEqualTo(originalTotalQuantity.subtract(updateQuantity.multiply(holdings.getAveragePrice())).intValueExact());
     }
 
     @Test
@@ -119,9 +127,24 @@ class HoldingsTest {
         BigDecimal quantity = BigDecimal.valueOf(100);
 
         // when
-        holdings.updateHoldings(Type.LIMIT_SELL, BigDecimal.ZERO, quantity);
+        holdings.updateHoldings(Type.LIMIT_SELL, new BigDecimal(1000), quantity);
 
         // then
         assertThat(holdings.getDeletedDateTime()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("보유한 주식의 총 금액을 계산한다.")
+    void calculateTotalPurchasePrice() {
+        // given
+        BigDecimal updatedQuantity = BigDecimal.valueOf(50);
+        BigDecimal totalPurchasePrice = holdings.getTotalPurchasePrice();
+        BigDecimal averagePrice = holdings.getAveragePrice();
+
+        // when
+        holdings.updateHoldings(Type.LIMIT_SELL, new BigDecimal(1000), updatedQuantity);
+
+        // then
+        assertThat(holdings.getTotalPurchasePrice()).isEqualTo(totalPurchasePrice.subtract(averagePrice.multiply(updatedQuantity)));
     }
 }

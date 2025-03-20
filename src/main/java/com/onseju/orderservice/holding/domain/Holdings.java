@@ -66,7 +66,7 @@ public class Holdings extends BaseEntity {
 	}
 
 	public void validateExistHoldings() {
-		if (this.isDeleted() || this.quantity.equals(BigDecimal.ZERO)) {
+		if (this.quantity.equals(BigDecimal.ZERO)) {
 			throw new HoldingsNotFoundException();
 		}
 	}
@@ -89,13 +89,9 @@ public class Holdings extends BaseEntity {
 	}
 
 	private void updateBuyHoldings(final BigDecimal updatePrice, final BigDecimal updateQuantity) {
-		if (this.isDeleted()) {
-			restore();
-		}
 		this.quantity = this.quantity.add(updateQuantity);
 		this.totalPurchasePrice = this.totalPurchasePrice.add(updateQuantity.multiply(updatePrice));
 		this.averagePrice = this.totalPurchasePrice.divide(this.quantity, 4, RoundingMode.HALF_UP);
-
 	}
 
 	// 새로운 총 매수 금액 = 기존 총 매수 금액 − (평단가×매도 수량)
@@ -104,10 +100,10 @@ public class Holdings extends BaseEntity {
 		this.quantity = this.quantity.subtract(updateQuantity);
 		this.totalPurchasePrice = this.totalPurchasePrice.subtract(updateQuantity.multiply(this.averagePrice));
 
-		// 예약 수량 감소 (체결된 만큼 예약 수량에서 제거)
+				// 예약 수량 감소 (체결된 만큼 예약 수량에서 제거)
 		this.reservedQuantity = this.reservedQuantity.subtract(updateQuantity);
 
-		if (this.quantity.compareTo(BigDecimal.ZERO) == 0) {
+		if (this.quantity.equals(BigDecimal.ZERO)) {
 			this.softDelete(LocalDateTime.now());
 		}
 	}

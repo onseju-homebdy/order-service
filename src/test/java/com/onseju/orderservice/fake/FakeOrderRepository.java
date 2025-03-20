@@ -1,4 +1,4 @@
-package com.onseju.orderservice.order.fake;
+package com.onseju.orderservice.fake;
 
 import com.onseju.orderservice.order.domain.Order;
 import com.onseju.orderservice.order.service.repository.OrderRepository;

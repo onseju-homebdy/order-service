@@ -1,9 +1,8 @@
 package com.onseju.orderservice.tradehistory.service;
 
-import com.onseju.orderservice.tradehistory.domain.TradeHistory;
 import com.onseju.orderservice.tradehistory.dto.TradeHistoryResponse;
+import com.onseju.orderservice.tradehistory.mapper.TradeHistoryMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
@@ -11,18 +10,16 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class TradeHistoryService {
+
 	private final TradeHistoryRepository tradeHistoryRepository;
+	private final TradeHistoryMapper tradeHistoryMapper;
 
 	/**
 	 * 거래 내역 저장 (일반 사용자)
 	 */
 	public void saveTradeHistory(final TradeHistoryResponse tradeHistoryResponse) {
-		TradeHistory tradeHistory = TradeHistory.builder().build();
-
 		// DB 저장
-		tradeHistoryRepository.save(tradeHistory);
-		log.info("거래 내역 저장: {}", tradeHistory);
+		tradeHistoryRepository.save(tradeHistoryMapper.toEntity(tradeHistoryResponse));
 	}
 }

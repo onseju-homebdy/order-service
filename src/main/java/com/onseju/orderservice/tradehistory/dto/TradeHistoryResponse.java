@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 
 @Builder
 public record TradeHistoryResponse(
-		Long id,
 		String companyCode,
 		Long sellOrderId,
 		Long buyOrderId,

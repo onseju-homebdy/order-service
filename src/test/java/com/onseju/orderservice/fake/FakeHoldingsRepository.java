@@ -1,16 +1,16 @@
-package com.onseju.orderservice.order.fake;
+package com.onseju.orderservice.fake;
 
 import com.onseju.orderservice.holding.domain.Holdings;
 import com.onseju.orderservice.holding.exception.HoldingsNotFoundException;
 import com.onseju.orderservice.holding.service.HoldingsRepository;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class FakeHoldingsRepository implements HoldingsRepository {
 
-    private final List<Holdings> elements = new ArrayList<>();
+    private final ConcurrentSkipListSet<Holdings> elements = new ConcurrentSkipListSet<>(Comparator.comparing(Holdings::getAccountId));
 
     @Override
     public Holdings getByAccountIdAndCompanyCode(Long accountId, String companyCode) {

@@ -1,8 +1,7 @@
 package com.onseju.orderservice.holding.service;
 
 import com.onseju.orderservice.holding.domain.Holdings;
-import com.onseju.orderservice.order.domain.Type;
-import com.onseju.orderservice.holding.repository.HoldingsRepositoryImpl;
+import com.onseju.orderservice.holding.service.dto.UpdateHoldingsParams;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,12 +11,11 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class HoldingsService {
 
-	private final HoldingsRepositoryImpl holdingsRepository;
+	private final HoldingsRepository holdingsRepository;
 
-	public void updateHoldingsAfterTrade(final Type type, final Long accountId, final String companyCode,
-										 final BigDecimal price, final BigDecimal quantity) {
-		final Holdings holdings = getOrCreateHoldings(accountId, companyCode);
-		holdings.updateHoldings(type, price, quantity);
+	public void updateHoldingsAfterTrade(final UpdateHoldingsParams params) {
+		final Holdings holdings = getOrCreateHoldings(params.accountId(), params.companyCode());
+		holdings.updateHoldings(params.type(), params.price(), params.quantity());
 		holdingsRepository.save(holdings);
 	}
 
