@@ -2,6 +2,7 @@ package com.onseju.orderservice.company.controller;
 
 import com.onseju.orderservice.company.controller.response.CompanySearchResponse;
 import com.onseju.orderservice.company.service.CompanyService;
+import com.onseju.orderservice.global.jwt.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ class CompanyControllerTest {
 
 	@MockitoBean
 	private CompanyService companyService;
+
+	@Autowired
+	private JwtUtil jwtUtil;
 
 	@Nested
 	@DisplayName("회사 검색 기능 테스트")

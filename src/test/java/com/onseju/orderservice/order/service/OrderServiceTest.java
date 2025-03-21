@@ -12,6 +12,7 @@ import com.onseju.orderservice.order.domain.Type;
 import com.onseju.orderservice.order.exception.OrderPriceQuotationException;
 import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
 import com.onseju.orderservice.order.mapper.OrderMapper;
+import com.onseju.orderservice.order.service.dto.CreateOrderParams;
 import com.onseju.orderservice.order.service.repository.AccountRepository;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
 import com.onseju.orderservice.stub.StubAccountRepository;
@@ -54,9 +55,9 @@ class OrderServiceTest {
 		@Test
 		@DisplayName("TC20.2.1 주문 생성 테스트")
 		void testPlaceOrder() {
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, new BigDecimal(1), new BigDecimal(1000));
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(1), new BigDecimal(1000), 1L);
 
-			assertThatNoException().isThrownBy(() -> orderService.placeOrder(request, 1L));
+			assertThatNoException().isThrownBy(() -> orderService.placeOrder(params));
 		}
 	}
 
@@ -69,10 +70,10 @@ class OrderServiceTest {
 		void placeOrderWhenPriceWithinUpperLimit() {
 			// given
 			BigDecimal price = new BigDecimal(1300);
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(1), price, 1L);
 
 			// when, then
-			assertThatNoException().isThrownBy(() -> orderService.placeOrder(request, 1L));
+			assertThatNoException().isThrownBy(() -> orderService.placeOrder(params));
 		}
 
 		@Test
@@ -80,10 +81,10 @@ class OrderServiceTest {
 		void throwExceptionWhenPriceExceedsUpperLimit() {
 			// given
 			BigDecimal price = new BigDecimal(1301);
-			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_SELL, new BigDecimal(10), price, 1L);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L)).isInstanceOf(PriceOutOfRangeException.class);
+			assertThatThrownBy(() -> orderService.placeOrder(params)).isInstanceOf(PriceOutOfRangeException.class);
 		}
 
 		@Test
@@ -91,9 +92,10 @@ class OrderServiceTest {
 		void placeOrderWhenPriceWithinLowerLimit() {
 			// given
 			BigDecimal price = new BigDecimal(700);
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(10), price, 1L);
+
 			// when, then
-			assertThatNoException().isThrownBy(() -> orderService.placeOrder(request, 1L));
+			assertThatNoException().isThrownBy(() -> orderService.placeOrder(params));
 		}
 
 		@Test
@@ -101,10 +103,10 @@ class OrderServiceTest {
 		void throwExceptionWhenPriceIsBelowLowerLimit() {
 			// given
 			BigDecimal price = new BigDecimal(699);
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(10), price, 1L);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L))
+			assertThatThrownBy(() -> orderService.placeOrder(params))
 					.isInstanceOf(PriceOutOfRangeException.class);
 		}
 
@@ -113,10 +115,10 @@ class OrderServiceTest {
 		void throwExceptionWhenInvalidPrice() {
 			// given
 			BigDecimal price = new BigDecimal(-1);
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(10), price, 1L);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L)).isInstanceOf(OrderPriceQuotationException.class);
+			assertThatThrownBy(() -> orderService.placeOrder(params)).isInstanceOf(OrderPriceQuotationException.class);
 		}
 
 		@Test
@@ -124,10 +126,10 @@ class OrderServiceTest {
 		void throwExceptionWhenInvalidUnitPrice() {
 			// given
 			BigDecimal price = new BigDecimal("0.5");
-			OrderRequest request = createOrderRequest(Type.LIMIT_BUY, BigDecimal.valueOf(10), price);
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_BUY, new BigDecimal(10), price, 1L);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L)).isInstanceOf(OrderPriceQuotationException.class);
+			assertThatThrownBy(() -> orderService.placeOrder(params)).isInstanceOf(OrderPriceQuotationException.class);
 		}
 	}
 
@@ -139,12 +141,12 @@ class OrderServiceTest {
 		@DisplayName("매도 주문일 경우, 예약 주문 개수를 저장한다.")
 		void reserveForSellType() {
 		    // given
-			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000));
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000), 1L);
 			Holdings holdings = createHoldings(new BigDecimal(10));
 			holdingsRepository.save(holdings);
 
 			// when
-			orderService.placeOrder(request, 1L);
+			orderService.placeOrder(params);
 
 		    // then
 			Holdings updatedHoldings = holdingsRepository.getByAccountIdAndCompanyCode(holdings.getAccountId(), holdings.getCompanyCode());
@@ -155,10 +157,10 @@ class OrderServiceTest {
 		@DisplayName("매도 주문일 경우, 입력한 종목에 대한 보유 주식이 없을 경우 예외가 발생한다.")
 		void throwExceptionWhenSellingStockWithoutHoldingAny() {
 			// given
-			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000));
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_SELL, new BigDecimal(1), new BigDecimal(1000), 1L);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L))
+			assertThatThrownBy(() -> orderService.placeOrder(params))
 					.isInstanceOf(HoldingsNotFoundException.class);
 		}
 
@@ -166,12 +168,12 @@ class OrderServiceTest {
 		@DisplayName("매도 주문일 경우, 입력한 종목에 대한 보유 주식의 개수가 부족할 경우 예외가 발생한다.")
 		void throwExceptionWhenSellingExceedingOwnedQuantity() {
 			// given
-			OrderRequest request = createOrderRequest(Type.LIMIT_SELL, new BigDecimal(100), new BigDecimal(1000));
+			CreateOrderParams params = createCreateOrderParams(Type.LIMIT_SELL, new BigDecimal(100), new BigDecimal(1000), 1L);
 			Holdings holdings = createHoldings(new BigDecimal(10));
 			holdingsRepository.save(holdings);
 
 			// when, then
-			assertThatThrownBy(() -> orderService.placeOrder(request, 1L))
+			assertThatThrownBy(() -> orderService.placeOrder(params))
 					.isInstanceOf(InsufficientHoldingsException.class);
 		}
 	}
@@ -187,6 +189,22 @@ class OrderServiceTest {
 			totalQuantity,
 			price,
 			LocalDateTime.of(2025, 1, 1, 1, 1)
+		);
+	}
+
+	private CreateOrderParams createCreateOrderParams(
+			Type type,
+			BigDecimal totalQuantity,
+			BigDecimal price,
+			Long memberId
+	) {
+		return new CreateOrderParams(
+				"005930",
+				type,
+				totalQuantity,
+				price,
+				LocalDateTime.of(2025, 1, 1, 1, 1),
+				memberId
 		);
 	}
 

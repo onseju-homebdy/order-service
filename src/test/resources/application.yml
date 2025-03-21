@@ -6,8 +6,31 @@ spring:
     username: sa
     password:
 
+  config:
+    import: classpath:/env.properties
+
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+
+  logging.level:
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
+    # WebSocket ???
+    org.springframework.web.socket: DEBUG
+
+  ki:
+    appKey: ${KOREAINVEST_CLIENT_ID}
+    appSecret: ${KOREAINVEST_CLIENT_SECRET}
+    accountNo: ""
+
+webSocket:
+  server:
+    websocketKey: ${KOREAINVEST_WEBSOCKET_KEY}
+    url: ${KOREAINVEST_API_URL}
+
+jwt:
+  secret:
+    key: ${JWT_SECRET_KEY}

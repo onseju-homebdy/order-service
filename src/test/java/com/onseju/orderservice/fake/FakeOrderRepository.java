@@ -1,6 +1,7 @@
 package com.onseju.orderservice.fake;
 
 import com.onseju.orderservice.order.domain.Order;
+import com.onseju.orderservice.order.exception.OrderNotFoundException;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
 
 import java.util.ArrayList;
@@ -47,5 +48,13 @@ public class FakeOrderRepository implements OrderRepository {
         return elements.stream()
                 .filter(e -> Objects.equals(e.getId(), id))
                 .findAny();
+    }
+
+    @Override
+    public Order getById(Long id) {
+        return elements.stream()
+                .filter(e -> Objects.equals(e.getId(), id))
+                .findAny()
+                .orElseThrow(OrderNotFoundException::new);
     }
 }

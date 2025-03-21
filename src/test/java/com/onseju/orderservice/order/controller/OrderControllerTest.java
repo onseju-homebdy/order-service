@@ -1,9 +1,11 @@
 package com.onseju.orderservice.order.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onseju.orderservice.global.jwt.JwtUtil;
 import com.onseju.orderservice.order.controller.request.OrderRequest;
 import com.onseju.orderservice.order.domain.Type;
 import com.onseju.orderservice.order.service.OrderService;
+import com.onseju.orderservice.order.service.dto.CreateOrderParams;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,9 @@ class OrderControllerTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 
+	@MockitoBean
+	private JwtUtil jwtUtil;
+
 	@Test
 	@DisplayName("주문 생성 테스트")
 	void testReceived() throws Exception {
@@ -45,6 +50,6 @@ class OrderControllerTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isOk());
-		verify(orderService).placeOrder(any(OrderRequest.class), any(Long.class));
+		verify(orderService).placeOrder(any(CreateOrderParams.class));
 	}
 }

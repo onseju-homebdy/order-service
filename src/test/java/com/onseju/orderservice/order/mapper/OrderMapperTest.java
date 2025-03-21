@@ -1,8 +1,8 @@
 package com.onseju.orderservice.order.mapper;
 
-import com.onseju.orderservice.order.controller.request.OrderRequest;
 import com.onseju.orderservice.order.domain.Order;
 import com.onseju.orderservice.order.domain.Type;
+import com.onseju.orderservice.order.service.dto.CreateOrderParams;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,10 +20,10 @@ class OrderMapperTest {
     void toEntity() {
         // given
         String companyCode = "005930";
-        OrderRequest orderRequest = new OrderRequest(companyCode, Type.LIMIT_BUY, new BigDecimal("100"), new BigDecimal("1000"), LocalDateTime.now());
+        CreateOrderParams createOrderParams = new CreateOrderParams("005930", Type.LIMIT_BUY, new BigDecimal(100), new BigDecimal(1000), LocalDateTime.now(), 1L);
 
         // when
-        Order order = orderMapper.toEntity(orderRequest, 1L);
+        Order order = orderMapper.toEntity(createOrderParams, 1L);
 
         // then
         assertThat(order).isNotNull();
