@@ -5,6 +5,7 @@ import com.onseju.orderservice.company.service.CompanyRepository;
 import com.onseju.orderservice.holding.domain.Holdings;
 import com.onseju.orderservice.holding.service.HoldingsRepository;
 import com.onseju.orderservice.order.domain.Account;
+import com.onseju.orderservice.order.domain.Order;
 import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
 import com.onseju.orderservice.order.mapper.OrderMapper;
 import com.onseju.orderservice.order.service.dto.CreateOrderParams;
@@ -13,6 +14,7 @@ import com.onseju.orderservice.order.service.repository.OrderRepository;
 import com.onseju.orderservice.order.service.validator.OrderValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class OrderService {
 	private final HoldingsRepository holdingsRepository;
 	private final AccountRepository accountRepository;
 	private final OrderMapper orderMapper;
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	@Transactional
 	public void placeOrder(final CreateOrderParams params) {
@@ -41,7 +44,9 @@ public class OrderService {
 
 		Account account = accountRepository.getByMemberId(params.memberId());
 		reserveForSellOrder(params, account.getId());
-		orderRepository.save(orderMapper.toEntity(params, account.getId()));
+		Order savedOrder = orderRepository.save(orderMapper.toEntity(params, account.getId()));
+
+		applicationEventPublisher.publishEvent(orderMapper.toEvent(savedOrder));
 	}
 
 	// 종가 기준 가격 검증
