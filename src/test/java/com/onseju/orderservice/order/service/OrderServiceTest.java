@@ -21,6 +21,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,7 +35,7 @@ class OrderServiceTest {
 
 	OrderService orderService;
 
-	AccountRepository accountRepository;
+	AccountRepository accountRepository = new StubAccountRepository();;
 
 	CompanyRepository companyRepository = new StubCompanyRepository();
 
@@ -43,10 +45,12 @@ class OrderServiceTest {
 
 	OrderMapper orderMapper = new OrderMapper();
 
+	ApplicationEventPublisher applicationEventPublisher;
+
 	@BeforeEach
 	void setUp() {
-		accountRepository = new StubAccountRepository();
-		orderService = new OrderService(orderRepository, companyRepository, holdingsRepository, accountRepository, orderMapper);
+		applicationEventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+		orderService = new OrderService(orderRepository, companyRepository, holdingsRepository, accountRepository, orderMapper, applicationEventPublisher);
 	}
 
 	@Nested
