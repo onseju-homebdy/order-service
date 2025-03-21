@@ -4,10 +4,10 @@ import com.onseju.orderservice.company.domain.Company;
 import com.onseju.orderservice.company.service.CompanyRepository;
 import com.onseju.orderservice.holding.domain.Holdings;
 import com.onseju.orderservice.holding.service.HoldingsRepository;
-import com.onseju.orderservice.order.controller.request.OrderRequest;
 import com.onseju.orderservice.order.domain.Account;
 import com.onseju.orderservice.order.exception.PriceOutOfRangeException;
 import com.onseju.orderservice.order.mapper.OrderMapper;
+import com.onseju.orderservice.order.service.dto.CreateOrderParams;
 import com.onseju.orderservice.order.service.repository.AccountRepository;
 import com.onseju.orderservice.order.service.repository.OrderRepository;
 import com.onseju.orderservice.order.service.validator.OrderValidator;
@@ -30,18 +30,18 @@ public class OrderService {
 	private final OrderMapper orderMapper;
 
 	@Transactional
-	public void placeOrder(final OrderRequest request, Long memberId) {
+	public void placeOrder(final CreateOrderParams params) {
 		// 지정가 주문 가격 견적 유효성 검증
-		final BigDecimal price = request.price();
+		final BigDecimal price = params.price();
 		final OrderValidator validator = OrderValidator.getUnitByPrice(price);
 		validator.isValidPrice(price);
 
 		// 종가 기준 검증
-		validateClosingPrice(price, request.companyCode());
+		validateClosingPrice(price, params.companyCode());
 
-		Account account = accountRepository.getByMemberId(memberId);
-		reserveForSellOrder(request);
-		orderRepository.save(orderMapper.toEntity(request, account.getId()));
+		Account account = accountRepository.getByMemberId(params.memberId());
+		reserveForSellOrder(params, account.getId());
+		orderRepository.save(orderMapper.toEntity(params, account.getId()));
 	}
 
 	// 종가 기준 가격 검증
@@ -53,11 +53,11 @@ public class OrderService {
 		}
 	}
 
-	private void reserveForSellOrder(final OrderRequest request) {
-		if (request.type().isSell()) {
-			final Holdings holdings = holdingsRepository.getByAccountIdAndCompanyCode(1L, request.companyCode());
-			validateHoldings(holdings, request.totalQuantity());
-			holdings.reserveOrder(request.totalQuantity());
+	private void reserveForSellOrder(final CreateOrderParams params, final Long accountId) {
+		if (params.type().isSell()) {
+			final Holdings holdings = holdingsRepository.getByAccountIdAndCompanyCode(accountId, params.companyCode());
+			validateHoldings(holdings, params.totalQuantity());
+			holdings.reserveOrder(params.totalQuantity());
 		}
 	}
 
